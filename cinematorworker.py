@@ -23,7 +23,7 @@ else:
     csrftoken = csrfmiddlewaretoken.attrs['value']
 
 headers['Referer'] = loginurl
-params = {'username': 'miheevv', 'password': 'mbdmbd', 'csrfmiddlewaretoken': csrftoken}
+params = {'username': 'miheevv', 'password': '123', 'csrfmiddlewaretoken': csrftoken}
 
 r = client.post(loginurl, headers=headers, data=params)
 bsObj = BeautifulSoup(r.content) 
