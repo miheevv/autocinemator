@@ -28,4 +28,5 @@ params = {'username': 'miheevv', 'password': '123', 'csrfmiddlewaretoken': csrft
 r = client.post(loginurl, headers=headers, data=params)
 bsObj = BeautifulSoup(r.content) 
 print(bsObj.title)
+
 # print(r.text)
