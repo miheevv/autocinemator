@@ -1,12 +1,17 @@
 # from urllib.request import Request, urlopen
+import os
 from bs4 import BeautifulSoup
 import requests
 
-loginurl = 'http://cinemate.cc/login/'
+# settings
+login_url = 'http://cinemate.cc/login/'
+cinemate_url = 'http://cinemate.cc/'
 headers = {'User-Agent': 'Mozilla/5.0'}
+username = os.environ.get('CINEMATE_USERNAME')
+password = os.environ.get('CINEMATE_PASSWORD')
 
 client = requests.session()
-r = client.get(loginurl, headers=headers)
+r = client.get(login_url, headers=headers)
 
 cinematecokies = client.cookies.get_dict(domain='cinemate.cc')
 
@@ -22,11 +27,20 @@ else:
     csrfmiddlewaretoken = loginform.find('', {'name': 'csrfmiddlewaretoken'})
     csrftoken = csrfmiddlewaretoken.attrs['value']
 
-headers['Referer'] = loginurl
-params = {'username': 'miheevv', 'password': '123', 'csrfmiddlewaretoken': csrftoken}
+headers['Referer'] = login_url
+params = {'username': username, 'password': password, 'csrfmiddlewaretoken': csrftoken}
 
-r = client.post(loginurl, headers=headers, data=params)
+print(params)
+r = client.post(login_url, headers=headers, data=params)
 bsObj = BeautifulSoup(r.content) 
-print(bsObj.title)
+print(bsObj.find('',{'class':'username'}))
+print(client.cookies.get_dict(domain='cinemate.cc'))
 
 # print(r.text)
+
+r = client.get(cinemate_url, headers=headers)
+bsObj = BeautifulSoup(r.content) 
+print(bsObj.find('',{'class':'username'}))
+
+# print(r.text)
+
