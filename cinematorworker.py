@@ -3,9 +3,9 @@
 Regulary get new films and torrent links from cinemate.cc.
 
 Films DB structure:
-films: name, href, quality, category, date, discription
+films: name, href, quality, categories, date, countries, discription
        IMDB_rate, IMDB_count, Kinopoisk_rate, Kinopoisk_count, 
-       torrent_urls, added_datetime, downloaded, for_delete, deleted
+       torrent_urls, added_datetime, to_download, downloaded, to_delete, deleted
 
 '''
 
@@ -17,10 +17,13 @@ import pymongo
 from pymongo import MongoClient
 from datetime import datetime
 from pprint import pprint
+import locale
 
 ### Settings
+locale.setlocale(locale.LC_ALL, "")
+# locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 login_url = 'http://cinemate.cc/login/'
-top_url = 'http://cinemate.cc/#top_sites_7'
+top_url = 'http://cinemate.cc'
 headers = {'User-Agent': 'Mozilla/5.0'}
 username = os.environ.get('CINEMATE_USERNAME')
 password = os.environ.get('CINEMATE_PASSWORD')
@@ -75,7 +78,7 @@ def get_new_films(db, url, top_category):
     for filmdiv in filmdivs_list:
         fullname = str(filmdiv.div.a.attrs['title'])
         name = fullname[:-7]    # without year
-        href = str(filmdiv.div.a.attrs['href'])
+        href = top_url + str(filmdiv.div.a.attrs['href'])
         newfilm = {'name': name,
                    'href': href}
         
@@ -105,6 +108,31 @@ def get_new_films(db, url, top_category):
     return filmslist
 
 
+# Get film's info
+def get_film_info(film):
+    r = client.get(film['href'], headers=headers)
+    bsObj = BeautifulSoup(r.content, 'html.parser') 
+    film_detail =  bsObj.find('',{'class': 'object_detail'})
+    
+    film['discription'] = film_detail.find('',{'class': 'description'}).get_text().strip()
+    
+    categories = []
+    for item in film_detail.find('',{'class': 'main'}).find_all('a',{'itemprop': 'genre'}):
+        categories += item
+    film['categories'] = categories
+
+    ratings = film_detail.find('',{'id': 'ratings'}).li
+    film['IMDB_rate'] = float(ratings.span.a.get_text())
+    film['IMDB_count'] = int(ratings.small.get_text()[1:-1])
+    film['Kinopoisk_rate'] = float(ratings.find_next_sibling('li').span.a.get_text())
+    film['Kinopoisk_count'] = int(ratings.find_next_sibling('li').small.get_text()[1:-1])
+
+    film_date = film_detail.find('',{'id': 'releases'}).li.small.get_text()[4:]
+    print(film_date)
+    # film['date'] = datetime.strptime(film_date, '%d %B %Y')
+
+    # country
+
 # Main
 client = requests.session()
 r = loginin(login_url, client)
@@ -115,9 +143,12 @@ db = get_db(db_URI)
 newfilms = get_new_films(db, top_url, 'top_sites_24')
 pprint(newfilms)
 
-# films: name, href, quality, category, date, discription
+get_film_info(newfilms[0])
+pprint(newfilms[0])
+
+# films: name, href, quality, categories, date, countries, discription
 # IMDB_rate, IMDB_count, Kinopoisk_rate, Kinopoisk_count, 
-# torrent_urls, added_datetime, downloaded, for_delete, deleted
+# torrent_urls, added_datetime, to_download, downloaded, to_delete, deleted
 films = db.films
 '''newfilm = {'name': 'film1', 
            'added_datetime': datetime.utcnow()}
