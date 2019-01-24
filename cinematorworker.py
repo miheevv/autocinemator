@@ -3,9 +3,10 @@
 Regulary get new films and torrent links from cinemate.cc.
 
 Films DB structure:
-films: name, href, quality, categories, date, countries, discription
+films: name, href, quality, categories, date, countries, discription, img
        IMDB_rate, IMDB_count, Kinopoisk_rate, Kinopoisk_count, 
-       torrent_urls, added_datetime, to_download, downloaded, to_delete, deleted
+       added_datetime, torrent_urls, bad_torrent, 
+       filmfolder (by default - 'films'), to_download, downloaded, to_delete (to delete on server), deleted (don't download in future again)
 
 '''
 
@@ -15,9 +16,10 @@ from bs4 import BeautifulSoup
 import requests
 import pymongo
 from pymongo import MongoClient
-from datetime import datetime
+import datetime
 from pprint import pprint
 import locale
+import re
 
 ### Settings
 locale.setlocale(locale.LC_ALL, "")
@@ -69,7 +71,7 @@ def loginin(url, client_session):
 def get_new_films(db, url, top_category):
     filmslist =[]
     films_in_db = db.films
-    current_year = datetime.utcnow().year
+    current_year = datetime.datetime.utcnow().year
 
     r = client.get(url, headers=headers)
     bsObj = BeautifulSoup(r.content, 'html.parser') 
@@ -86,7 +88,6 @@ def get_new_films(db, url, top_category):
         qualitylist = []
         for item in filmdiv.div.findNext('div').find_all('a'):
             qualitylist += item
-        print(qualitylist)
 
         # Get highness quality
         if 'Rip' or 'HD' in qualitylist:
@@ -103,10 +104,34 @@ def get_new_films(db, url, top_category):
         # Don't add if persist in DB
         if films_in_db.find_one({'name': name}): continue
 
-        print(name, filmyear)
         filmslist.append(newfilm)
     return filmslist
 
+# Convert string in format '%day %month_str %year' into datetime
+def datestr_to_date(datestr):
+    month_to_int = {
+        'января': 1,
+        'февраля': 2,
+        'марта': 3,
+        'апреля': 4,
+        'мая': 5,
+        'июня': 6,
+        'июля': 7,
+        'августа': 8,
+        'сентября': 9,
+        'октября': 10,
+        'ноября': 11,
+        'декабря': 12
+    }
+    day = int(re.search(r'^\d+', datestr).group(0))
+    month_str = re.search(r'\s\w+\s', datestr).group(0).strip().lower()
+    year = int (re.search(r'\d+$', datestr).group(0))
+
+    try:
+        month = month_to_int[month_str]
+    except KeyError as e:
+        raise ValueError('Undefined unit: {}'.format(e.args[0]))
+    return datetime.datetime(year, month, day)
 
 # Get film's info
 def get_film_info(film):
@@ -114,24 +139,57 @@ def get_film_info(film):
     bsObj = BeautifulSoup(r.content, 'html.parser') 
     film_detail =  bsObj.find('',{'class': 'object_detail'})
     
+    # Description
     film['discription'] = film_detail.find('',{'class': 'description'}).get_text().strip()
     
+    # Categories
     categories = []
     for item in film_detail.find('',{'class': 'main'}).find_all('a',{'itemprop': 'genre'}):
         categories += item
     film['categories'] = categories
+    
+    # Countries
+    countries = []
+    for item in film_detail.find('',{'class': 'main'}).find(text='|').parent.find_next_siblings('a'):
+        countries += item
+    film['countries'] = countries
 
+    # Rate
     ratings = film_detail.find('',{'id': 'ratings'}).li
     film['IMDB_rate'] = float(ratings.span.a.get_text())
     film['IMDB_count'] = int(ratings.small.get_text()[1:-1])
     film['Kinopoisk_rate'] = float(ratings.find_next_sibling('li').span.a.get_text())
     film['Kinopoisk_count'] = int(ratings.find_next_sibling('li').small.get_text()[1:-1])
 
-    film_date = film_detail.find('',{'id': 'releases'}).li.small.get_text()[4:]
-    print(film_date)
-    # film['date'] = datetime.strptime(film_date, '%d %B %Y')
+    # Date
+    try:
+        film_date = film_detail.find('',{'id': 'releases'}).li.small.get_text().strip()[4:]
+        film['date'] = datestr_to_date(film_date)
+    except:
+        film['date'] = None
 
-    # country
+    # Img
+    film['img'] = 'http:' + bsObj.find('',{'class': 'posterbig'}).img.attrs['src']
+
+# Filter new films and return list to add (with autoset filmfolders, etc. params)
+def filter_films(newfilms, films):
+    notfiltred_films = []
+    for item in newfilms:
+        removeflag = None
+        if ('IMDB_count' not in item) or (item['IMDB_count'] < 5000) or \
+           ('IMDB_rate' not in item) or (item['IMDB_rate'] < 5.5) or \
+           ('Kinopoisk_count' not in item) or (item['Kinopoisk_count'] < 1000) or \
+           ('Kinopoisk_rate' not in item) or (item['Kinopoisk_rate'] < 5.0):
+            removeflag = 1
+        
+        # If already in DB - don't add in list
+        if films.find_one({'name': item['name'], 'date' : item['date']}):
+            removeflag = 1
+        
+        if removeflag is None:
+            notfiltred_films.append(item)
+    
+    return notfiltred_films
 
 # Main
 client = requests.session()
@@ -141,14 +199,27 @@ db = get_db(db_URI)
 
 # New films list to add in DB
 newfilms = get_new_films(db, top_url, 'top_sites_24')
+
+# Get film's info for every film
+for item in newfilms:
+    get_film_info(item)
+
+# Get films from DB
+films = db.films
+
+newfilms = filter_films(newfilms, films)
+
 pprint(newfilms)
 
-get_film_info(newfilms[0])
-pprint(newfilms[0])
 
-# films: name, href, quality, categories, date, countries, discription
-# IMDB_rate, IMDB_count, Kinopoisk_rate, Kinopoisk_count, 
-# torrent_urls, added_datetime, to_download, downloaded, to_delete, deleted
+# get torrent_urls
+# if bad torrent - get other url
+
+# add to db
+
+# - next - rename cinematorworker.py to cinematorparser.py (worker - on server to add torrent url for download, and delete old films)  
+# - cinematorgui.py - list new films, mark to download and delete.
+
 films = db.films
 '''newfilm = {'name': 'film1', 
            'added_datetime': datetime.utcnow()}
