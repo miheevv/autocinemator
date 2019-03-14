@@ -7,6 +7,7 @@ films: name, href, quality, categories, date, countries, discription, img
        IMDB_rate, IMDB_count, Kinopoisk_rate, Kinopoisk_count, 
        added_datetime, torrent_urls, bad_torrent, new (resently added)
        filmfolder (by default - 'films'), to_download, downloaded, to_delete (to delete on server), deleted (don't download in future again)
+test git
 
 '''
 
