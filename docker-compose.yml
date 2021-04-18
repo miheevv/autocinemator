@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  database:
+    container_name: mongodb
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: "${CINEMATE_ROOT_PASSWORD}"
+      MONGO_INITDB_DATABASE: admin
+      DB_NAME: autocinemator
+      DB_USER: "${CINEMATE_DB_USERNAME}"
+      DB_PASSWORD: "${CINEMATE_DB_PASSWORD}"
+    volumes:
+      - ../mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro
+      - ../mongo-autocinemator:/data/db
+    ports:
+      - 27017:27017
+    restart: always
