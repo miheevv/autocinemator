@@ -29,7 +29,9 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.6,<3.9"
+python = ">=3.6,<3.10"
+beautifulsoup4 = "^4.9.3"
+pymongo = "^3.11.3"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.800"
@@ -43,9 +45,8 @@ safety = "^1.10"
 pytest = "^6.2"
 pytest-cov = "^2.11"
 pytest-randomly = "^3.5"
-
-sphinx = "^3.4"
-sphinx-autodoc-typehints = "^1.11"
-doc8 = "^0.8"
-m2r2 = "^0.2"
-tomlkit = "^0.7"
+pymongo = "^3.11.3"
+pytest-mock = "^3.5.1"
+requests-mock = "^1.8.0"
+pylint = "^2.7.4"
+mongomock = "^3.22.1"

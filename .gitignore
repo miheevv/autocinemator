@@ -67,6 +67,7 @@ $RECYCLE.BIN/
 #### python ####
 # Byte-compiled / optimized / DLL files
 __pycache__/
+.pytest_cache/
 *.py[cod]
 *$py.class
 
@@ -212,3 +213,6 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+
+#VSCode settings
+.vscode/
