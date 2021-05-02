@@ -16,7 +16,7 @@ from autocinemator.cinematorprobe import datestr_to_date, get_film_info, filter_
 from autocinemator.cinematorprobe import get_trackers, login_in_tracker, get_ext_torrent
 from autocinemator.cinematorprobe import filter_trackers, get_best_torrent_url, add_torrurl_and_mark
 
-DB_HOST = 'srvm'
+db_host = os.environ.get('CINEMATE_DB_HOST')
 DB_NAME = 'autocinemator'
 cinemate_user = os.environ.get('CINEMATE_USERNAME')
 cinemate_password = os.environ.get('CINEMATE_PASSWORD')
@@ -28,7 +28,7 @@ TOP_URL = 'https://beta.cinemate.cc'
 
 @pytest.fixture()
 def dbconnection():
-    pymongo_client = pymongo.MongoClient(DB_HOST,
+    pymongo_client = pymongo.MongoClient(db_host,
                                          username=db_user,
                                          password=db_password,
                                          authSource=DB_NAME)
@@ -56,7 +56,7 @@ def prelogin_kinozal():
 
 def test_get_db_pass(dbconnection):
     ''' Testing returned db object, insert and delete object '''
-    assert get_db(DB_HOST, DB_NAME, db_user, db_password) == dbconnection[DB_NAME]
+    assert get_db(db_host, DB_NAME, db_user, db_password) == dbconnection[DB_NAME]
     # create and remove object in db
     inserted_id = dbconnection[DB_NAME].test.insert_one({"test": "test"}).inserted_id
     assert dbconnection[DB_NAME].test.delete_one({'_id': inserted_id})
@@ -64,8 +64,8 @@ def test_get_db_pass(dbconnection):
 
 def test_get_db_fail():
     assert get_db('incorrect dbname', DB_NAME, db_user, db_password) is None
-    assert get_db(DB_HOST, DB_NAME, 'bad_user', db_password) is None
-    assert get_db(DB_HOST, DB_NAME, db_user, 'bad_password') is None
+    assert get_db(db_host, DB_NAME, 'bad_user', db_password) is None
+    assert get_db(db_host, DB_NAME, db_user, 'bad_password') is None
 
 
 def test_loginin_cinemate_pass():

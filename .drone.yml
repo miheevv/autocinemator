@@ -1,9 +1,15 @@
-name: drone-test
+name: default
 kind: pipeline
-type: docker
 
 steps:
 - name: test
-  image: alpine
+  image: python
+  environment:
+    CINEMATE_DB_HOST: ${CINEMATE_DB_HOST}
+    CINEMATE_DB_USERNAME: ${CINEMATE_DB_USERNAME}
+    CINEMATE_DB_PASSWORD: ${CINEMATE_DB_PASSWORD}
+    CINEMATE_USERNAME: ${CINEMATE_USERNAME}
+    CINEMATE_PASSWORD: ${CINEMATE_PASSWORD}
   commands:
-  - echo "It worked NOW!"
+  - pip install -r requirements-dev.txt
+  - pytest

@@ -479,7 +479,7 @@ def main():
     cinemate_user = os.environ.get('CINEMATE_USERNAME')
     cinemate_password = os.environ.get('CINEMATE_PASSWORD')
     # DB
-    DB_HOST = 'srvm'
+    db_host = os.environ.get('CINEMATE_DB_HOST')
     DB_NAME = 'autocinemator'
     db_user = os.environ.get('CINEMATE_DB_USERNAME')
     db_password = os.environ.get('CINEMATE_DB_PASSWORD')
@@ -488,7 +488,7 @@ def main():
     client = requests.session()
     if not loginin_cinemate(client, cinemate_user, cinemate_password):
         return
-    db = get_db(DB_HOST, DB_NAME, db_user, db_password)
+    db = get_db(db_host, DB_NAME, db_user, db_password)
     if not db:
         return
 
