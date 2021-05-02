@@ -7,10 +7,14 @@ steps:
   environment:
     CINEMATE_DB_HOST: ${CINEMATE_DB_HOST}
     CINEMATE_DB_USERNAME: ${CINEMATE_DB_USERNAME}
-    CINEMATE_DB_PASSWORD: ${CINEMATE_DB_PASSWORD}
-    CINEMATE_USERNAME: ${CINEMATE_USERNAME}
-    CINEMATE_PASSWORD: ${CINEMATE_PASSWORD}
+    CINEMATE_USERNAME:
+      from_secret: CINEMATE_USERNAME
+    #CINEMATE_DB_PASSWORD: ${CINEMATE_DB_PASSWORD}
+    #CINEMATE_USERNAME: ${CINEMATE_USERNAME}
+    #CINEMATE_PASSWORD: ${CINEMATE_PASSWORD}
   commands:
-  - /usr/local/bin/python -m pip install --upgrade pip
-  - pip install -r requirements-dev.txt
-  - pytest
+  - printenv
+  - echo "drone env :${CINEMATE_DB_USERNAME}"
+  #- /usr/local/bin/python -m pip install --upgrade pip
+  #- pip install -r requirements-dev.txt
+  #- pytest
