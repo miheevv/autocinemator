@@ -1,8 +1,9 @@
 name: drone-test
 kind: pipeline
 type: docker
+
 steps:
 - name: test
-image: alpine
-commands:
-- echo "It worked NOW!"
+  image: alpine
+  commands:
+  - echo "It worked NOW!"
