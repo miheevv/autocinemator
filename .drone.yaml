@@ -5,4 +5,4 @@ steps:
 - name: test
 image: alpine
 commands:
-- echo "It worked!"
+- echo "It worked NOW!"
